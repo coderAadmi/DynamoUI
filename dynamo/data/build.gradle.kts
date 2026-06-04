@@ -3,6 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
+
+    kotlin("plugin.serialization") version "2.3.0"
+
+    id("androidx.room")
 }
 
 android {
@@ -32,6 +36,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
+
 }
 kotlin {
     jvmToolchain(11)
@@ -45,6 +53,21 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:2.57.1")
     ksp("com.google.dagger:hilt-android-compiler:2.57.1")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+
+    val room_version = "2.8.4"
+
+
+
+    api("androidx.room:room-runtime:$room_version")
+
+    implementation("androidx.room:room-ktx:${room_version}")
+
+    ksp("androidx.room:room-compiler:$room_version")
+
+    api(libs.retrofit.core)
+    api(libs.retrofit.converter.gson)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

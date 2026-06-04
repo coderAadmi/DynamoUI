@@ -1,58 +1,83 @@
 package com.tc.data
 
+import android.util.Log
+import com.tc.data.db.FormDao
+import com.tc.data.network.DomainMapper
+import com.tc.data.network.DynamoApi
 import com.tc.domain.Response
 import com.tc.domain.models.Form
-import com.tc.domain.models.FormElement
 import com.tc.domain.repo.DynamoRepository
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-class NetworkApi{
-    fun getAllForms() : List<Form> {
-        return listOf(
-            Form("1", "Form #1", listOf()),
-            Form("2", "Form #2", listOf()),
-            Form("3", "Form #3", listOf())
-        )
+inline suspend fun < reified T : DomainMapper > processResponse(
+    response: retrofit2.Response<T>,
+    flow: FlowCollector<Response>,
+    cache : ( T ) -> Unit
+) {
+    when {
+        response.isSuccessful -> {
+            val body = response.body()
+            body?.let {
+                flow.emit(Response.Success(it.toDomain() ) )
+                cache(it)
+            }
+            if (body == null) {
+                flow.emit(Response.Failure("Null response from server"))
+            }
+        }
+
+        else -> {
+            flow.emit(Response.Failure(response.message() ) )
+        }
     }
 }
 
-class DynamoRepositoryImpl @Inject constructor (private val api  :  NetworkApi) : DynamoRepository {
+class DynamoRepositoryImpl @Inject constructor(
+    private val api: DynamoApi,
+    private val formDao: FormDao
+) : DynamoRepository {
     override suspend fun getAllForms(): Flow<Response> {
         return flow {
+
             emit(Response.Loading)
 
-            delay(3000)
+            val formsResponse = api.getAllForms()
 
-            emit(
-                Response.Success<List<Form>>(
-                    api.getAllForms()
-                )
-            )
+            processResponse(formsResponse, this){
+                // save to db
+                formDao.insertAll(it.forms.map { it.toEntity() } )
+            }
         }
     }
 
     override suspend fun getForm(id: String): Flow<Response> {
-        return flow {
-            emit(Response.Loading)
+        try {
+            fetchFormFromServer(id).collect {
 
-            delay(3000)
+            }
+        }
+        catch (e : Exception){
+            Log.d("NET_DBG", e.message.toString())
+        }
+        return formDao.getFormById(id).map {
+            Response.Success(it.toDomain())
+        }
+    }
 
-            emit(
-                Response.Success<Form>(
-                    Form(
-                        "1", "Form #1",
-                        listOf(
-                            FormElement("1","First element", FormElement.Type.TEXT),
-                            FormElement("2","second element", FormElement.Type.INPUT),
-                            FormElement("3","3rd element", FormElement.Type.IMG)
-                        )
-                    )
-                )
+     suspend fun fetchFormFromServer(id: String): Flow<Response> {
+         return flow{
+            val response = api.getForm(id)
 
-            )
+            Log.d("NET_DBG", response.toString())
+
+            processResponse( response, this ){
+                // save to db
+                formDao.insert(it.toEntity() )
+            }
         }
     }
 

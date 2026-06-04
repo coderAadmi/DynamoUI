@@ -45,7 +45,7 @@ fun DynamoScreen(
 
 
     LaunchedEffect(Unit ) {
-        dynamoVm.process(UiIntent.LoadForm("1"))
+        dynamoVm.process(UiIntent.LoadForm("customer_registration"))
     }
 
     Scaffold(modifier.fillMaxSize()) { innerPadding ->
