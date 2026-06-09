@@ -64,7 +64,13 @@ class DynamoRepositoryImpl @Inject constructor(
             Log.d("NET_DBG", e.message.toString())
         }
         return formDao.getFormById(id).map {
-            Response.Success(it.toDomain())
+           if(it != null){
+               Response.Success(it.toDomain())
+           }
+            else{
+               Response.Failure("there is nothing in db")
+           }
+
         }
     }
 

@@ -43,7 +43,6 @@ fun DynamoScreen(
 
     val uiState by dynamoVm.uiState.collectAsStateWithLifecycle()
 
-
     LaunchedEffect(Unit ) {
         dynamoVm.process(UiIntent.LoadForm("customer_registration"))
     }

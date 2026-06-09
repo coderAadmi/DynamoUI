@@ -18,8 +18,8 @@ interface FormDao {
     // insert(formList)
 
     @Query("Select * from forms")
-    fun getAll() : Flow<List<FormEntity>>
+    fun getAll() : Flow<List<FormEntity?>>
 
     @Query("Select * from forms where formId = :id")
-    fun getFormById(id : String) : Flow<FormEntity>
+    fun getFormById(id : String) : Flow<FormEntity?>
 }

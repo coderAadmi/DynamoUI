@@ -36,6 +36,13 @@ android {
     buildFeatures{
         compose = true
     }
+
+    testOptions {
+        unitTests {
+            // Allows Robolectric to access resources, assets, and manifests
+            isIncludeAndroidResources = true
+        }
+    }
 }
 kotlin {
     jvmToolchain(11)
@@ -49,6 +56,7 @@ dependencies {
     implementation(project(":dynamo:domain"))
 
     implementation("com.google.dagger:hilt-android:2.57.1")
+    implementation(libs.androidx.ui.test.junit4)
     ksp("com.google.dagger:hilt-android-compiler:2.57.1")
 
     implementation(libs.androidx.activity.compose)
@@ -58,6 +66,11 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
+//    https://developer.android.com/develop/ui/compose/testing
+// Test rules and transitive dependencies:
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.11.2")
+// Needed for createComposeRule(), but not for createAndroidComposeRule<YourActivity>():
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.11.2")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -66,4 +79,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    testImplementation("org.robolectric:robolectric:4.16")
+    testImplementation("androidx.test.ext:junit:1.3.0")
 }
